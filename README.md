@@ -13,7 +13,7 @@
 
 | Entregables | URL |
 | :--- | :--- |
-| Repositorio | https://github.com/rescobedoq/enrollments.git |
+| Repositorio | [https://github.com/rescobedoq/enrollments.git](https://github.com/jpinedasu/nsk.git) |
 | **Informes**[^1] | |
 |lab07 |en proceso|
 |lab08 |en proceso|
