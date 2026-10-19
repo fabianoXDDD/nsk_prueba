@@ -99,4 +99,30 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// Punto 3: Cierre de sesión y recurso protegido
 
+// Middleware de Autorización
+function authMiddleware(req, res, next) {
+    if (req.session && req.session.userId) {
+        return next(); // Usuario autenticado
+    }
+    return res.status(401).json({
+        status: 'fail',
+        message: 'Message: acceso no autorizado'
+    });
+}
+
+// Endpoint protegido GET /api/perfil
+app.get('/api/perfil', authMiddleware, (req, res) => {
+    const user = users.find(u => u.id === req.session.userId);
+
+    if (!user) {
+        return res.status(404).json({ status: 'fail', message: 'Usuario no encontrado' });
+    }
+
+    // Se devuelven los datos sin la contraseña
+    return res.json({
+        status: 'success',
+        user: { id: user.id, email: user.email }
+    });
+});
