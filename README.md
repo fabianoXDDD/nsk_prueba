@@ -2,7 +2,7 @@
 
 # Descripción de la aplicación web
 - Se trata de una aplicación web la cual tiene el rol de inventario, donde se podra organizar todos los productos o cosas que quieras.
-
+  
 | Equipo | Rol | Porcentaje |
 | :--- | :--- | :---: |
 | Piero Arosquipa | Desarrollador frontend | 100% |
