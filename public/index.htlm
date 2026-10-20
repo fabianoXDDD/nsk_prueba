@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Inventario </title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+    .container { background: #ffffff; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 100%; max-width: 450px; }
+    h2 { margin-top: 0; color: #0f172a; text-align: center; }
+    
+    .form-group { margin-bottom: 1.2rem; }
+    label { display: block; margin-bottom: 0.4rem; color: #334155; font-size: 0.9rem; font-weight: 600; }
+    input { width: 100%; padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
+    input:focus { outline: none; border-color: #2563eb; ring: 2px #2563eb; }
+    
+    .btn-group { display: flex; gap: 10px; margin-top: 1rem; }
+    button { flex: 1; padding: 0.75rem; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+    .btn-primary { background-color: #2563eb; color: white; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-secondary { background-color: #64748b; color: white; }
+    .btn-secondary:hover { background-color: #475569; }
+    .btn-danger { background-color: #ef4444; color: white; width: 100%; margin-top: 1rem; }
+    .btn-danger:hover { background-color: #dc2626; }
+    
+    /* Alertas visuales */
+    .alert { padding: 0.8rem; margin-top: 1.2rem; border-radius: 6px; font-size: 0.875rem; text-align: center; font-weight: 500; }
+    .alert-success { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .alert-error { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    
+    /* Perfil de Usuario */
+    .profile-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.2rem; margin-top: 1rem; }
+    .profile-card p { margin: 0.5rem 0; color: #334155; font-size: 0.95rem; }
+    .badge { display: inline-block; padding: 0.25rem 0.5rem; background: #22c55e; color: white; font-size: 0.75rem; border-radius: 12px; font-weight: bold; }
+    
+    /* Inspector del arreglo */
+    .admin-panel { margin-top: 2rem; border-top: 2px dashed #e2e8f0; padding-top: 1rem; }
+    .admin-panel h3 { font-size: 0.9rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .user-list { list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; }
+    .user-item { background: #f1f5f9; padding: 0.5rem; border-radius: 4px; font-size: 0.8rem; margin-bottom: 0.4rem; word-break: break-all; }
+    
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 1. Formulario de Inicio de Sesión y Registro -->
+    <div id="auth-forms">
+      <h2>Acceso </h2>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">Correo </label>
+          <input type="email" id="email" placeholder="juanperes@gmail.com" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+        <div class="btn-group">
+          <button type="button" class="btn-primary" onclick="login()">Ingresar</button>
+          <button type="button" class="btn-secondary" onclick="register()">Registrar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 2. Vista de Datos del Usuario Autenticado -->
+    <div id="profile-panel" class="hidden">
+      <h2>Perfil del Estudiante</h2>
+      <div class="profile-card">
+        <p><span class="badge">Sesión Activa</span></p>
+        <p><strong>ID Universitario:</strong> <span id="user-id"></span></p>
+        <p><strong>Correo:</strong> <span id="user-email"></span></p>
+      </div>
+      <button class="btn-danger" onclick="logout()">Cerrar Sesión</button>
+    </div>
+
+    <!-- Caja de Notificaciones (Muestra credenciales incorrectas o éxitos) -->
+    <div id="alert-box" class="alert hidden"></div>
+
+    <!-- 3. Visualizador del Arreglo users[] en Memoria -->
+    <div class="admin-panel">
+      <h3>Usuarios Guardados en Memoria (users[])</h3>
+      <ul id="users-list" class="user-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const alertBox = document.getElementById('alert-box');
+
+    function showAlert(msg, isError = false) {
+      alertBox.textContent = msg;
+      alertBox.className = `alert ${isError ? 'alert-error' : 'alert-success'}`;
+    }
+
+    function hideAlert() {
+      alertBox.className = 'alert hidden';
+    }
+
+    // Actualiza la lista visible del arreglo users[]
+    async function updateUsersList() {
+      const res = await fetch('/api/users');
+      const users = await res.json();
+      const list = document.getElementById('users-list');
+      
+      if (users.length === 0) {
+        list.innerHTML = '<li class="user-item"><em>No hay usuarios registrados aún.</em></li>';
+        return;
+      }
+
+      list.innerHTML = users.map(u => `
+        <li class="user-item">
+          <strong>Email:</strong> ${u.email}<br>
+          <strong>Hash:</strong> ${u.password.substring(0, 18)}...
+        </li>
+      `).join('');
+    }
+
+    // Registro
+    async function register() {
+      hideAlert();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showAlert(data.message, false);
+        updateUsersList();
+      } else {
+        showAlert(data.message, true);
+      }
+    }
+
+    // Login (Maneja el mensaje de datos incorrectos)
+    async function login() {
+      hideAlert();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showAlert('¡Bienvenido! Sesión iniciada.', false);
+        checkSession();
+      } else {
+        // Muestra alerta roja si los datos no coinciden
+        showAlert(data.message, true);
+      }
+    }
+
+    // Comprobar estado de la sesión y cargar datos autenticados
+    async function checkSession() {
+      const res = await fetch('/api/perfil');
+      if (res.ok) {
+        const user = await res.json();
+        // Carga los datos del usuario autenticado
+        document.getElementById('user-id').textContent = user.id;
+        document.getElementById('user-email').textContent = user.email;
+        
+        // Muestra panel de perfil y oculta formulario
+        document.getElementById('auth-forms').classList.add('hidden');
+        document.getElementById('profile-panel').classList.remove('hidden');
+      } else {
+        // Muestra formulario de login y oculta perfil
+        document.getElementById('auth-forms').classList.remove('hidden');
+        document.getElementById('profile-panel').classList.add('hidden');
+      }
+      updateUsersList();
+    }
+
+    // Cierre de sesión y transición visual
+    async function logout() {
+      hideAlert();
+      const res = await fetch('/api/auth/logout', { method: 'POST' });
+      if (res.ok) {
+        showAlert('Has cerrado sesión correctamente.', false);
+        checkSession();
+      }
+    }
+
+    // Ejecución inicial
+    checkSession();
+  </script>
+</body>
+</html>
