@@ -136,3 +136,7 @@ app.post('/api/auth/logout', (req, res) => {
         return res.json({ status: 'success', message: 'Sesión cerrada exitosamente' });
     });
 });
+
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});
