@@ -126,3 +126,13 @@ app.get('/api/perfil', authMiddleware, (req, res) => {
         user: { id: user.id, email: user.email }
     });
 });
+// Endpoint POST /api/auth/logout
+app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ status: 'error', message: 'No se pudo cerrar la sesión' });
+        }
+        res.clearCookie('connect.sid'); // Limpia la cookie de sesión
+        return res.json({ status: 'success', message: 'Sesión cerrada exitosamente' });
+    });
+});
