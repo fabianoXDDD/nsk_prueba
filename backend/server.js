@@ -3,6 +3,10 @@
 // dotenv al inicio para usar PORT y SESSION SECRET dsde .env
 
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const pool = require('./db');
+
 const express = require('express');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
