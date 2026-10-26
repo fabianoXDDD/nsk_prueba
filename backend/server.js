@@ -12,6 +12,12 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 
 const app = express();
+// Ejecutar el script de la base al levantar el servidor
+const sql = fs.readFileSync(path.join(__dirname, '..', 'bd', 'bd.sql'), 'utf8');
+pool.query(sql)
+  .then(() => console.log('✅ Base de datos lista'))
+  .catch(err => console.error('Error al ejecutar bd.sql:', err.message));
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
