@@ -38,6 +38,9 @@
 | **BD** | SQL |
 | | Supabase |
 
+# Modelo de Datos[^3]
+![image](img/inventoryv1.0.png)
+
 # Estructura del proyecto
 ```bash
 proyecto/
