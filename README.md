@@ -43,7 +43,31 @@
 
 # Estructura del proyecto
 ```bash
-proyecto/
+├── backend
+│   ├── pub
+│   │   ├── css
+│   │   ├── fonts
+│   │   ├── img
+│   │   ├── js
+│   │   └── others
+│   └── README.md
+│   ├── .env
+│   ├── .gitignore
+│   ├── README.md
+│   ├── db.js
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── priv
+│   ├── server.js
+├── bd
+│   ├── bd.sql
+│   └── README.md
+├── img
+│   └── inventoryv1.0.png
+├── informes
+│   ├── IDWeb_lab07_avance_proyecto.pdf
+├── public
+│   ├── index.html
 └── README.md
 ```
 [^1]: Los informes deben estar en el repositorio del grupo en un subdirectorio llamado 'informes'.
