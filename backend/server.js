@@ -44,67 +44,64 @@ const users = [];
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password } = req.body;
-
         if (!email || !password) {
             return res.status(400).json({ status: 'fail', message: 'Email y contraseña requeridos' });
         }
 
-        const existingUser = users.find(u => u.email === email);
-        if (existingUser) {
+        // Verificar si ya existe en Supabase
+        const userCheck = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+        if (userCheck.rows.length > 0) {
             return res.status(400).json({ status: 'fail', message: 'El usuario ya está registrado' });
         }
 
-        // Cifrado asíncrono de la contraseña 
         const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Insertar en la tabla usuarios de Supabase
+        const result = await pool.query(
+            'INSERT INTO usuarios (email, password_hash, rol_id) VALUES ($1, $2, $3) RETURNING id, email',
+            [email, hashedPassword, 1] // rol_id por defecto o el que corresponda
+        );
 
-        const newUser = {
-            id: Date.now().toString(),
-            email,
-            password: hashedPassword
-        };
-
-        users.push(newUser);
-
+        const newUser = result.rows[0];
         return res.status(201).json({
             status: 'success',
             message: 'Usuario registrado exitosamente',
-            user: { id: newUser.id, email: newUser.email }
+            user: newUser
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ status: 'error', message: 'Error interno en el servidor' });
     }
 });
-
 // Endpoint POST /api/auth/login
 // Ver si los datos son correctos o no
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
         if (!email || !password) {
             return res.status(400).json({ status: 'fail', message: 'Email y contraseña requeridos' });
         }
 
-        const user = users.find(u => u.email === email);
-        if (!user) {
-            return res.status(401).json({ status: 'fail', message: 'Algo está inválido' });
+        // Buscar el usuario en Supabase
+        const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+        if (result.rows.length === 0) {
+            return res.status(401).json({ status: 'fail', message: 'Credenciales inválidas' });
         }
 
-        // Comparar contraseñas mediante bcrypt.compare()
-        const isMatch = await bcrypt.compare(password, user.password);
+        const user = result.rows[0];
+        const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
-            return res.status(401).json({ status: 'fail', message: 'Algo está inválido' });
+            return res.status(401).json({ status: 'fail', message: 'Credenciales inválidas' });
         }
 
-        // Crear req.session.userId si todo está bien
         req.session.userId = user.id;
-
         return res.json({
             status: 'success',
             message: 'Inicio de sesión exitoso',
             user: { id: user.id, email: user.email }
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ status: 'error', message: 'Error interno en el servidor' });
     }
 });
@@ -123,18 +120,20 @@ function authMiddleware(req, res, next) {
 }
 
 // Endpoint protegido GET /api/perfil
-app.get('/api/perfil', authMiddleware, (req, res) => {
-    const user = users.find(u => u.id === req.session.userId);
+app.get('/api/perfil', authMiddleware, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, email FROM usuarios WHERE id = $1', [req.session.userId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ status: 'fail', message: 'Usuario no encontrado' });
+        }
 
-    if (!user) {
-        return res.status(404).json({ status: 'fail', message: 'Usuario no encontrado' });
+        return res.json({
+            status: 'success',
+            user: result.rows[0]
+        });
+    } catch (error) {
+        return res.status(500).json({ status: 'error', message: 'Error al obtener perfil' });
     }
-
-    // Se devuelven los datos sin la contraseña
-    return res.json({
-        status: 'success',
-        user: { id: user.id, email: user.email }
-    });
 });
 // Endpoint POST /api/auth/logout
 app.post('/api/auth/logout', (req, res) => {
