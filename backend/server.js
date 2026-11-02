@@ -48,7 +48,6 @@ app.post('/api/auth/register', async (req, res) => {
             return res.status(400).json({ status: 'fail', message: 'Email y contraseña requeridos' });
         }
 
-        // Verificar si ya existe en Supabase
         const userCheck = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
         if (userCheck.rows.length > 0) {
             return res.status(400).json({ status: 'fail', message: 'El usuario ya está registrado' });
@@ -56,20 +55,21 @@ app.post('/api/auth/register', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        // Insertar en la tabla usuarios de Supabase
+        // Generamos un nombre válido a partir del email (ej. "eskibidi" de "eskibidi@gmail.com")
+        const nombreUsuario = email.split('@')[0];
+
         const result = await pool.query(
-            'INSERT INTO usuarios (email, password_hash, rol_id) VALUES ($1, $2, $3) RETURNING id, email',
-            [email, hashedPassword, 1] // rol_id por defecto o el que corresponda
+            'INSERT INTO usuarios (nombre, email, password_hash, rol_id) VALUES ($1, $2, $3, $4) RETURNING id, email',
+            [nombreUsuario, email, hashedPassword, 1]
         );
 
-        const newUser = result.rows[0];
         return res.status(201).json({
             status: 'success',
             message: 'Usuario registrado exitosamente',
-            user: newUser
+            user: result.rows[0]
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error en registro:', error);
         return res.status(500).json({ status: 'error', message: 'Error interno en el servidor' });
     }
 });
