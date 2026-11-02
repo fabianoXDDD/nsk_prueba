@@ -21,7 +21,7 @@ pool.query(sql)
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-
+app.use(express.static(path.join(__dirname, '..', 'public')));
 // Configurar la sesión con la clave secreta super segura y opciones de seguridad
 app.use(session({
     secret: process.env.SESSION_SECRET || 'clave_secreta_super_segura',
