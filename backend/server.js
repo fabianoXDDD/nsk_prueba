@@ -126,11 +126,9 @@ app.get('/api/perfil', authMiddleware, async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ status: 'fail', message: 'Usuario no encontrado' });
         }
-
-        return res.json({
-            status: 'success',
-            user: result.rows[0]
-        });
+        
+        // Se devuelve el objeto del usuario directamente { id, email } para que el HTML lo lea correctamente
+        return res.json(result.rows[0]);
     } catch (error) {
         return res.status(500).json({ status: 'error', message: 'Error al obtener perfil' });
     }
