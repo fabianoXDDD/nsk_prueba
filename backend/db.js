@@ -10,4 +10,4 @@ const pool = new Pool({
   ssl: isLocal ? false : { rejectUnauthorized: false }
 });
 
-module.exports = pool;s
+module.exports = pool;
